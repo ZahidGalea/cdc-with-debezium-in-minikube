@@ -36,7 +36,7 @@ kubectl apply -f namespaces/oracle-namespace.yml
 
 Lets set a simple Database :sweat_smile:
 
-[Database Readme](database/README.md
+[Database Readme](database/README.md)
 
 
 ## X - End it
