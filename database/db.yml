@@ -32,7 +32,7 @@ spec:
           imagePullPolicy: Never
           resources:
             requests:
-              memory: 8Gi
+              memory: 6Gi
           ports:
             - name: listener
               containerPort: 1521

@@ -18,7 +18,7 @@
 ```
 # Start with the minikube configuration:
 
-minikube config set memory 10240
+minikube config set memory 6900
 minikube addons enable metrics-server
 minikube start
 eval $(minikube docker-env)
@@ -36,4 +36,12 @@ kubectl apply -f namespaces/oracle-namespace.yml
 
 Lets set a simple Database :sweat_smile:
 
-[Database Readme](database/README.md)
+[Database Readme](database/README.md
+
+
+## X - End it
+
+```
+minikube stop
+minikube delete
+```
