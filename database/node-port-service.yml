@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: oracle18xe
+  namespace: oracle-namespace
+  labels:
+    app: database
+    version: 18.4.0.1
+spec:
+  selector:
+    app: database
+    version: 18.4.0.1
+  type: NodePort
+  ports:
+    - name: listener
+      protocol: TCP
+      port: 1521
+      targetPort: 1521
+    - name: oemexpress
+      protocol: TCP
+      port: 5500
+      targetPort: 5500
