@@ -17,9 +17,10 @@ docker login...
 docker pull pvargacl/oracle-xe-18.4.0:latest
 
 # Applying the database and the service nodeport resources
-kubectl apply -f db.yml
 kubectl apply -f node-port-service.yml
+kubectl apply -f db.yml
 
+## Important! 
 # It exposes the service to make it work
 minikube service -n oracle-namespace oracle18xe --url
 
