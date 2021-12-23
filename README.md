@@ -1,6 +1,10 @@
-# Change Data Capture Demo
+# Currently Working on this :)
 
-## What is my plan? 
+## Change Data Capture Demo
+
+---
+
+### What is my plan? 
 
 1) Generate a DB with a Logisitc Model and an API to generate Test traffic into. :heavy_check_mark:
 2) Crete a replication of the DB  using Debezium + Kafka
