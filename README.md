@@ -23,8 +23,8 @@
 # Start with the minikube configuration:
 
 minikube config set memory 6900
-minikube addons enable metrics-server
 minikube start
+minikube addons enable metrics-server
 eval $(minikube docker-env)
 
 -----

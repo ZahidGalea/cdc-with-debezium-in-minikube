@@ -29,7 +29,7 @@ spec:
           image: pvargacl/oracle-xe-18.4.0:latest
           command:
             - /opt/oracle/runOracle.sh
-          imagePullPolicy: Never
+          imagePullPolicy: Always
           resources:
             requests:
               memory: 6Gi
@@ -45,11 +45,6 @@ spec:
               mountPath: "/dev/shm"
             # add your persistent storage for DB files here
           env:
-            - name: ORACLE_PWD
-              valueFrom:
-                configMapKeyRef:
-                  name: oradb #Read from a configmap called oradb
-                  key: ORACLE_PWD #Read the key call ORACLE_PWD
             - name: ORACLE_CHARACTERSET
               valueFrom:
                 configMapKeyRef:
