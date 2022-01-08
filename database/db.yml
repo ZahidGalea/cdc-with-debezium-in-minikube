@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: oracle18xe
-  namespace: oracle-ns
+  namespace: application-ns
   labels:
     app: database
     version: 18.4.0.1

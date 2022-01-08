@@ -3,18 +3,18 @@ kind: Deployment
 metadata:
   name: filler-app
   namespace: application-ns
-  labels:
-    app: filler-app
-    version: 1.0.0
 spec:
   replicas: 1
   selector:
     matchLabels:
       app: filler-app
-      version: 1.0.0
+      version: "1.0.0"
   template:
     metadata:
       name: filler-app
+      labels:
+        app: filler-app
+        version: "1.0.0"
     spec:
       containers:
         - name: filler-app
@@ -24,8 +24,23 @@ spec:
             - name: tomcat
               containerPort: 8080
           env:
-            - name: ORACLE_CHARACTERSET
+            - name: ORACLE_DB_HOST
+              value: "$(ORACLE18XE_SVC_SERVICE_HOST)"
+
+            - name: ORACLE_DB_PORT
+              value: "$(ORACLE18XE_SVC_SERVICE_PORT)"
+
+            - name: ORACLE_DB_NAME
+              value: XEPDB1
+
+            - name: ORACLE_DB_USERNAME
               valueFrom:
-                configMapKeyRef:
-                  name: oradb #Read from a configmap called oradb
-                  key: ORACLE_CHARACTERSET #Read the key call ORACLE_CHARACTERSET
+                secretKeyRef:
+                  name: oracle-db-auth
+                  key: username
+
+            - name: ORACLE_DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: oracle-db-auth
+                  key: password

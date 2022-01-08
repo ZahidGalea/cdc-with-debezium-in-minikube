@@ -5,7 +5,7 @@ metadata:
   labels:
     app: zookeeper-service
   name: zookeeper-service
-  namespace: kafka-ns
+  namespace: application-ns
 spec:
   type: NodePort
   ports:
@@ -23,7 +23,7 @@ metadata:
   labels:
     app: zookeeper
   name: zookeeper
-  namespace: kafka-ns
+  namespace: application-ns
 spec:
   replicas: 1
   selector:

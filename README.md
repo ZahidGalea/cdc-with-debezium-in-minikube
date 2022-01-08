@@ -41,10 +41,10 @@ Lets set a simple Database :sweat_smile:
 
 ```
 # Sets the context to avoid using of parameter namespace
-kubectl config set-context --current --namespace=oracle-ns
+kubectl config set-context --current --namespace=application-ns
 
 # Configmap creation for startup SQL, also .sh can be added to the same path
-kubectl create configmap filler-app-db-creation --from-env-file=database/startup-scripts/filler-app-db-creation.sql -n oracle-ns
+kubectl create configmap filler-app-db-creation --from-file=database/startup-scripts/filler-app-db-creation.sql -n application-ns
 
 # Dockere login could be required to pull the oracle image
 docker login... 
@@ -58,7 +58,7 @@ kubectl apply -f database/db.yml
 
 ## Important! 
 # It exposes the service to make it work if your application if outside
-# minikube service -n oracle-ns oracle18xe --url
+# minikube service -n application-ns oracle18xe --url
 # Or you can expose a localhost port to the pod using: as example
 # kubectl port-forward svc/oracle18xe-svc 30007:1521
 
@@ -78,7 +78,7 @@ kubectl apply -f database/db.yml
 ```
 # Creates namespace for kafka
 kubectl apply -f namespaces/kafka.yml
-kubectl config set-context --current --namespace=kafka-ns
+kubectl config set-context --current --namespace=application-ns
 
 ------
 # Creates zookeper
@@ -91,7 +91,7 @@ kubectl apply -f kafka/kafka.yml
 kubectl apply -f kafka/kafka-manager.yml
 
 # How to open kafka manager?
-# minikube service -n kafka-ns kafka-manager --url
+# minikube service -n application-ns kafka-manager --url
 # Open the resultant url from the output
 
 ```
@@ -99,8 +99,26 @@ kubectl apply -f kafka/kafka-manager.yml
 ## 3 - Filler APP Build
 
 ```
+kubectl config set-context --current --namespace=application-ns
+
 # Lets dockerize our java jar filler app and save it
 docker build -t=logistic-app:latest filler-app/
+
+# This apps requires an oracle DB Up and runing,
+# and the por 8080 available in order to work, because it uses Tomcat.
+
+# The following ENV Variables must be set in the deployment:
+# ORACLE_DB_HOST: localhost or an IP
+# ORACLE_DB_PORT: 1521 mostly for all oracle db 
+# ORACLE_DB_NAME: DB where the app will create the tables and fill with data
+# ORACLE_DB_USERNAME: ---
+# ORACLE_DB_PASSWORD: ---
+
+# But... lets do the auth it using a Secret ;)
+kubectl apply -f secrets/oracle-db-secret.yml
+
+# Lets run the application
+kubectl apply -f filler-app/filler-application.yml
 
 ```
 

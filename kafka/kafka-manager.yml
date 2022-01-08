@@ -2,7 +2,7 @@ kind: Service
 apiVersion: v1
 metadata:
   name: kafka-manager
-  namespace: kafka-ns
+  namespace: application-ns
 spec:
   type: NodePort
   selector:
@@ -16,7 +16,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: kafka-manager
-  namespace: kafka-ns
+  namespace: application-ns
 spec:
   replicas: 1
   selector:
