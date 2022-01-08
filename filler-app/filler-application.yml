@@ -1,0 +1,31 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: filler-app
+  namespace: application-ns
+  labels:
+    app: filler-app
+    version: 1.0.0
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: filler-app
+      version: 1.0.0
+  template:
+    metadata:
+      name: filler-app
+    spec:
+      containers:
+        - name: filler-app
+          image: logistic-app:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: tomcat
+              containerPort: 8080
+          env:
+            - name: ORACLE_CHARACTERSET
+              valueFrom:
+                configMapKeyRef:
+                  name: oradb #Read from a configmap called oradb
+                  key: ORACLE_CHARACTERSET #Read the key call ORACLE_CHARACTERSET

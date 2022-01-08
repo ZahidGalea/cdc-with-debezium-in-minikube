@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: oracle18xe
-  namespace: oracle-namespace
+  namespace: oracle-ns
   labels:
     app: database
     version: 18.4.0.1
@@ -23,7 +23,9 @@ spec:
         - name: dshm
           emptyDir:
             medium: Memory
-      # add your volume mount for your persistent storage here
+        - name: filler-app-db-creation
+          configMap:
+            name: filler-app-db-creation # Startup Scripts as configmaps
       containers:
         - name: oracle18xe
           image: pvargacl/oracle-xe-18.4.0:latest
@@ -36,17 +38,10 @@ spec:
           ports:
             - name: listener
               containerPort: 1521
-              hostPort: 1521
             - name: oemexpress
               containerPort: 5500
-              hostPort: 5500
           volumeMounts:
             - name: dshm
               mountPath: "/dev/shm"
-            # add your persistent storage for DB files here
-          env:
-            - name: ORACLE_CHARACTERSET
-              valueFrom:
-                configMapKeyRef:
-                  name: oradb #Read from a configmap called oradb
-                  key: ORACLE_CHARACTERSET #Read the key call ORACLE_CHARACTERSET
+            - name: filler-app-db-creation
+              mountPath: /opt/oracle/scripts/startup # Startup scripts directory
