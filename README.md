@@ -119,6 +119,53 @@ kubectl apply -f secrets/oracle-db-secret.yml
 
 # Lets run the application
 kubectl apply -f filler-app/filler-application.yml
+kubectl apply -f filler-app/node-port-service.yml
+
+# First we have to apply some SQL into the database after it is created in
+# order to the application to work, so...
+
+# Forward your port 1521, to the database.
+kubectl port-forward service/oracle18xe-svc 1521:1521
+# Then execute the file somehow: filler-app\required-insertion-in-db.sql
+
+# Now let's test our app using a single request, forwarding the port also
+kubectl port-forward service/filler-app-svc 8080:8080
+
+# Open a new terminal and, stream your logs...
+ kubectl logs -f deploy/filler-app
+ 
+# Now make a request to the port 8080 like this example:
+POST localhost:8080/api/v1/registrar-venta
+{
+	"fecha_envio": "2021-12-10",
+	"costo_envio": "123",
+	"direccion": "Carmen 390",
+	"comuna": "Santiago",
+	"nombre_apellido": "Zahid Galea",
+	"numero_telefono": "123123123",
+	"rut": "261093456",
+	"region": "a",
+	"peso": 12,
+	"tamanio": "grande"
+}
+
+# or using curl:
+curl --header "Content-Type: application/json" \
+  --request POST \
+  --data '{"fecha_envio":"2021-12-10","costo_envio":"123","direccion":"Carmen 390","comuna":"Santiago","nombre_apellido":"Zahid Galea","numero_telefono":"123123123","rut":"261093456","region":"b","peso":12,"tamanio":"grande"}' \
+  localhost:8080/api/v1/registrar-venta
+
+# Watch that the application is logging correctly....
+
+
+```
+
+## 4 - Streaming DB Changes with debezium
+
+```
+
+
+
 
 ```
 
@@ -138,6 +185,10 @@ https://github.com/d1egoaz/minikube-kafka-cluster
 ##### Oracle setup un minikube:
 
 https://ronekins.com/2020/03/14/running-oracle-12c-in-kubernetes-with-minikube-and-virtualbox/
+
+#### Debezium kafka guide:
+
+https://www.startdataengineering.com/post/change-data-capture-using-debezium-kafka-and-pg/
 
 ## Notes
 

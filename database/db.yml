@@ -1,5 +1,5 @@
 apiVersion: apps/v1
-kind: Deployment
+kind: StatefulSet
 metadata:
   name: oracle18xe
   namespace: application-ns
@@ -45,3 +45,4 @@ spec:
               mountPath: "/dev/shm"
             - name: filler-app-db-creation
               mountPath: /opt/oracle/scripts/startup # Startup scripts directory
+  serviceName: oracle18xe-db

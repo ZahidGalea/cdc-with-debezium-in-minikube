@@ -3,6 +3,9 @@ kind: Deployment
 metadata:
   name: filler-app
   namespace: application-ns
+  labels:
+    app: filler-app
+    version: "1.0.0"
 spec:
   replicas: 1
   selector:
