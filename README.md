@@ -19,9 +19,12 @@
 ## 0 - Start Config
 
 ```
+# In my case I start and use the docker daemon trought CLI
+sudo dockerd
+
 # Start with the minikube configuration:
 
-minikube config set memory 6900
+minikube config set memory 5000
 minikube start
 minikube addons enable metrics-server
 
@@ -40,13 +43,23 @@ kubectl apply -f namespaces/
 Lets set a simple Database :sweat_smile:
 
 ```
+# First of all.. you will need to build the oracledb image using the following guide:
+# https://github.com/oracle/docker-images/tree/main/OracleDatabase/SingleInstance
+# And as result you will have an oracle image ready to use locally
+# as example:
+# cd /OracleDatabase/SingleInstance/dockerfiles/19.3.0
+# You will have to download the linux x64 binaries from the oracle DB then:
+# docker build -t oracle/database:19.3.0-ee --build-arg DB_EDITION=ee .
+
 # Sets the context to avoid using of parameter namespace
 kubectl config set-context --current --namespace=application-ns
 
-# Configmap creation for startup SQL, also .sh can be added to the same path
+# Configmap creation for startup SQL
 kubectl create configmap filler-app-db-creation --from-file=database/startup-scripts/filler-app-db-creation.sql -n application-ns
+# This configmap will be used for the logminer configuration
+kubectl create configmap log-miner-config --from-file=database/startup-scripts/setup-logminer.sh -n application-ns
 
-# Dockere login could be required to pull the oracle image
+# Docker login could be required to pull the oracle image
 docker login... 
 
 # Downloading a custom image to avoid official oracle download ()
@@ -57,17 +70,12 @@ kubectl apply -f database/node-port-service.yml
 kubectl apply -f database/db.yml
 
 ## Important! 
-# It exposes the service to make it work if your application if outside
+# It exposes the service to make it work if your application its outside
 # minikube service -n application-ns oracle18xe --url
-# Or you can expose a localhost port to the pod using: as example
-# kubectl port-forward svc/oracle18xe-svc 30007:1521
 
-# DB Credentials as System:
+# DB Credentials as system and sys:
 # usuario: system
 # pw: oracle
-
-# Tip to get into the running pod 
-# kubectl exec --stdin --tty POD -- /bin/sh
 
 ```
 
@@ -76,8 +84,6 @@ kubectl apply -f database/db.yml
 ## 2 - Kafka & Zookeper
 
 ```
-# Creates namespace for kafka
-kubectl apply -f namespaces/kafka.yml
 kubectl config set-context --current --namespace=application-ns
 
 ------
@@ -99,7 +105,6 @@ kubectl apply -f kafka/kafka-manager.yml
 ## 3 - Filler APP Build
 
 ```
-kubectl config set-context --current --namespace=application-ns
 
 # Lets dockerize our java jar filler app and save it
 docker build -t=logistic-app:latest filler-app/
@@ -123,7 +128,6 @@ kubectl apply -f filler-app/node-port-service.yml
 
 # First we have to apply some SQL into the database after it is created in
 # order to the application to work, so...
-
 # Forward your port 1521, to the database.
 kubectl port-forward service/oracle18xe-svc 1521:1521
 # Then execute the file somehow: filler-app\required-insertion-in-db.sql
@@ -160,10 +164,64 @@ curl --header "Content-Type: application/json" \
 
 ```
 
-## 4 - Streaming DB Changes with debezium
+## 4 - Preparing the Oracle DB for Logs saving
 
 ```
 
+# First we must execute a serie of commands with SQL Plus and scripts inside the oracle container.
+# So, log in using: 
+kubectl exec -it oracle18xe-0 bash
+
+# We should have problem with permissions issues that will make the next commands fails
+# So execute the following command first or execute as root:
+chmod 6751 $ORACLE_HOME/bin/oracle
+
+# Now in bash, we will use the following script provided by debezium
+# https://raw.githubusercontent.com/debezium/oracle-vagrant-box/master/setup-logminer.sh
+# Just execute this:
+. /opt/oracle/scripts/setup-logminer.sh
+
+```
+
+## 5 - Streaming DB Changes with debezium
+
+```
+# To start using the debezium connector we must start the kafka connect. so first
+# Lets instantiate the kafka-schema-registry that ables the parsing to .JSON
+kubectl apply -f kafka/kafka-schema-registry.yml
+
+# Now lets get up the Kafka Connect
+kubectl apply -f kafka/kafka-connect.yml
+
+# Now set the debezium into the kafka connect using a simple curl. but first we will need to expose
+# the port 8083 to be able to curl it from our computer.
+kubectl port-forward service/kafka-connect 8083:8083
+
+# Test it with:
+# curl -H "Accept:application/json" localhost:8083/
+# It should return you something like:
+# {"version":"7.0.1-ccs","commit":"b7e52413e7cb3e8b","kafka_cluster_id":"287OqZkVRgi3TI80fjxJCg"}
+# If u want to list the connectors:
+# curl -H "Accept:application/json" localhost:8083/connectors/
+
+# Now register the debezium connector with:
+# POST localhost:8083/connectors/
+# {
+#     "name": "inventory-connector",  
+#     "config": {
+#         "connector.class" : "io.debezium.connector.oracle.OracleConnector",  
+#         "database.hostname" : "<ORACLE_IP_ADDRESS>",  
+#         "database.port" : "1521",  
+#         "database.user" : "c##dbzuser",  
+#         "database.password" : "dbz",   
+#         "database.dbname" : "ORCLCDB",  
+#         "database.server.name" : "server1",  
+#         "tasks.max" : "1",  
+#         "database.pdb.name" : "ORCLPDB1",  
+#         "database.history.kafka.bootstrap.servers" : "kafka:9092", 
+#         "database.history.kafka.topic": "schema-changes.inventory"  
+#     }
+# }
 
 
 
@@ -172,11 +230,12 @@ curl --header "Content-Type: application/json" \
 ## N - End it
 
 ```
+minikube docker-env --unset
 minikube stop
 minikube delete
 ```
 
-## Thanks to:
+## Resources
 
 ##### Zookeper & kafka deployment
 
@@ -189,6 +248,10 @@ https://ronekins.com/2020/03/14/running-oracle-12c-in-kubernetes-with-minikube-a
 #### Debezium kafka guide:
 
 https://www.startdataengineering.com/post/change-data-capture-using-debezium-kafka-and-pg/
+
+### Kafka explication:
+
+https://www.youtube.com/watch?v=QYbXDp4Vu-8
 
 ## Notes
 

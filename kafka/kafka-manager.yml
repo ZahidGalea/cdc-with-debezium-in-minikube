@@ -29,7 +29,7 @@ spec:
     spec:
       containers:
         - name: kafka-manager
-          image: sheepkiller/kafka-manager@sha256:615f3b99d38aba2d5fdb3fb750a5990ba9260c8fb3fd29c7e776e8c150518b78
+          image: sheepkiller/kafka-manager
           ports:
             - containerPort: 9000
           env:

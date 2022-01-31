@@ -23,15 +23,10 @@ spec:
         - name: dshm
           emptyDir:
             medium: Memory
-        - name: filler-app-db-creation
-          configMap:
-            name: filler-app-db-creation # Startup Scripts as configmaps
       containers:
         - name: oracle18xe
-          image: pvargacl/oracle-xe-18.4.0:latest
-          command:
-            - /opt/oracle/runOracle.sh
-          imagePullPolicy: Always
+          image: oracle/database:19.3.0-ee
+          imagePullPolicy: IfNotPresent
           resources:
             requests:
               memory: 6Gi
@@ -43,6 +38,7 @@ spec:
           volumeMounts:
             - name: dshm
               mountPath: "/dev/shm"
-            - name: filler-app-db-creation
-              mountPath: /opt/oracle/scripts/startup # Startup scripts directory
+          env:
+            - name: ORACLE_PWD
+              value: top_secret
   serviceName: oracle18xe-db

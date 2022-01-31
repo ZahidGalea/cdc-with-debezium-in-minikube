@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: penv
+spec:
+  containers:
+    - name: print-env-container
+      image: bash
+      imagePullPolicy: IfNotPresent
+      env:
+        - name: PRINT1
+          value: "$(KAFKA_PORT)"
+        - name: PRINT2
+          value: "$(ORACLE18XE_SVC_SERVICE_PORT)"
+      command: [ "echo" ]
+      args: [ '"PLAINTEXT://${KAFKA_SERVICE_HOST}:${KAFKA_SERVICE_PORT}" $(KAFKA_PORT)' ]
