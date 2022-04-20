@@ -6,13 +6,13 @@
 
 ## What is my plan?
 
-1) Generate a DB with a Logisitc Model and an API to generate Test traffic into. :heavy_check_mark:
+1) Generate a DB with a Logistic Model and an API to generate Test traffic into. :heavy_check_mark:
 2) Crete a replication of the DB using Debezium + Zookeper +Kafka
-3) Subscribe to the kafka topics a serie of applications like:
+3) Subscribe to the kafka topics a series of applications like:
     * Realtime Dashboards
     * Apache Beam processing for real time analytics
     * ML Model implementation
-4) Automatic deployment and integration trought a CI/CD Pipeline using Gitlab runners and Github as source repo.
+4) Automatic deployment and integration through a CI/CD Pipeline using Gitlab runners and Github as source repo.
 
 ---
 
@@ -36,7 +36,7 @@ kubectl apply -f namespaces/
 
 ## 1 - Oracle Database Setup
 
-Lets set a simple Database :sweat_smile:
+Let's set a simple Database :sweat_smile:
 
 ```
 # First of all.. you will need to build the oracledb image using the following guide:
@@ -224,7 +224,7 @@ minikube delete
 
 ## Resources
 
-##### Zookeper & kafka deployment
+##### Zookeeper & kafka deployment
 
 https://github.com/d1egoaz/minikube-kafka-cluster
 
