@@ -1,7 +1,0 @@
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: filler-app-db-creation
-  namespace: application-ns
-data:
-  special.how: very

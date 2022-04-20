@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: kafka-schema-registry
+  name: kafka-schema-registry-svc
   namespace: application-ns
   labels:
     app: kafka-schema-registry
@@ -32,7 +32,7 @@ spec:
             - containerPort: 8081
           env:
             - name: SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS
-              value: "PLAINTEXT://$(KAFKA_SERVICE_HOST):$(KAFKA_SERVICE_PORT)"
+              value: "PLAINTEXT://$(KAFKA_SVC_SERVICE_HOST):$(KAFKA_SVC_SERVICE_PORT)"
             - name: SCHEMA_REGISTRY_HOST_NAME
               value: localhost
             - name: SCHEMA_REGISTRY_LISTENERS

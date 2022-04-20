@@ -1,7 +1,7 @@
 kind: Service
 apiVersion: v1
 metadata:
-  name: kafka-connect
+  name: kafka-connect-svc
   namespace: application-ns
 spec:
   type: NodePort
@@ -32,7 +32,7 @@ spec:
             - containerPort: 8083
           env:
             - name: CONNECT_BOOTSTRAP_SERVERS
-              value: $(KAFKA_SERVICE_HOST):$(KAFKA_SERVICE_PORT)
+              value: "$(KAFKA_SVC_SERVICE_HOST):$(KAFKA_SVC_SERVICE_PORT)"
             - name: CONNECT_REST_PORT
               value: "8083"
             - name: CONNECT_GROUP_ID

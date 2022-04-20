@@ -26,10 +26,6 @@ sudo dockerd
 
 minikube config set memory 5000
 minikube start
-minikube addons enable metrics-server
-
-# This able us to use localmachine images
-eval $(minikube docker-env)
 
 -----
 # Creating our demo namespaces:
@@ -47,39 +43,40 @@ Lets set a simple Database :sweat_smile:
 # https://github.com/oracle/docker-images/tree/main/OracleDatabase/SingleInstance
 # And as result you will have an oracle image ready to use locally
 # as example:
-# cd /OracleDatabase/SingleInstance/dockerfiles/19.3.0
+# cd OracleDatabase/SingleInstance/dockerfiles/19.3.0
 # You will have to download the linux x64 binaries from the oracle DB then:
 # docker build -t oracle/database:19.3.0-ee --build-arg DB_EDITION=ee .
+# Or add the image to minikube with:
+# minikube image load oracle/database:19.3.0-ee
+
+# To use or not use the docker daemon of the minikube:
+eval $(minikube docker-env)
+eval $(minikube docker-env -u)
+
 
 # Sets the context to avoid using of parameter namespace
 kubectl config set-context --current --namespace=application-ns
 
 # Configmap creation for startup SQL
+# if exists: kubectl delete configmap filler-app-db-creation
 kubectl create configmap filler-app-db-creation --from-file=database/startup-scripts/filler-app-db-creation.sql -n application-ns
 # This configmap will be used for the logminer configuration
+# if exists: kubectl delete configmap log-miner-config
 kubectl create configmap log-miner-config --from-file=database/startup-scripts/setup-logminer.sh -n application-ns
-
-# Docker login could be required to pull the oracle image
-docker login... 
-
-# Downloading a custom image to avoid official oracle download ()
-docker pull pvargacl/oracle-xe-18.4.0:latest
 
 # Applying the database and the service nodeport resources
 kubectl apply -f database/node-port-service.yml
 kubectl apply -f database/db.yml
 
 ## Important! 
-# It exposes the service to make it work if your application its outside
+# To test the database:
 # minikube service -n application-ns oracle18xe --url
 
-# DB Credentials as system and sys:
+# DB Credentials as system:
 # usuario: system
-# pw: oracle
+# pw: top_secret
 
 ```
-
-[Database Readme](database/README.md)
 
 ## 2 - Kafka & Zookeper
 
@@ -136,7 +133,7 @@ kubectl port-forward service/oracle18xe-svc 1521:1521
 kubectl port-forward service/filler-app-svc 8080:8080
 
 # Open a new terminal and, stream your logs...
- kubectl logs -f deploy/filler-app
+kubectl logs -f deploy/filler-app
  
 # Now make a request to the port 8080 like this example:
 POST localhost:8080/api/v1/registrar-venta
@@ -164,26 +161,7 @@ curl --header "Content-Type: application/json" \
 
 ```
 
-## 4 - Preparing the Oracle DB for Logs saving
-
-```
-
-# First we must execute a serie of commands with SQL Plus and scripts inside the oracle container.
-# So, log in using: 
-kubectl exec -it oracle18xe-0 bash
-
-# We should have problem with permissions issues that will make the next commands fails
-# So execute the following command first or execute as root:
-chmod 6751 $ORACLE_HOME/bin/oracle
-
-# Now in bash, we will use the following script provided by debezium
-# https://raw.githubusercontent.com/debezium/oracle-vagrant-box/master/setup-logminer.sh
-# Just execute this:
-. /opt/oracle/scripts/setup-logminer.sh
-
-```
-
-## 5 - Streaming DB Changes with debezium
+## 4 - Streaming DB Changes with debezium
 
 ```
 # To start using the debezium connector we must start the kafka connect. so first
@@ -195,7 +173,7 @@ kubectl apply -f kafka/kafka-connect.yml
 
 # Now set the debezium into the kafka connect using a simple curl. but first we will need to expose
 # the port 8083 to be able to curl it from our computer.
-kubectl port-forward service/kafka-connect 8083:8083
+kubectl port-forward service/kafka-connect-svc 8083:8083
 
 # Test it with:
 # curl -H "Accept:application/json" localhost:8083/
@@ -210,7 +188,7 @@ kubectl port-forward service/kafka-connect 8083:8083
 #     "name": "inventory-connector",  
 #     "config": {
 #         "connector.class" : "io.debezium.connector.oracle.OracleConnector",  
-#         "database.hostname" : "<ORACLE_IP_ADDRESS>",  
+#         "database.hostname" : "localhost",  
 #         "database.port" : "1521",  
 #         "database.user" : "c##dbzuser",  
 #         "database.password" : "dbz",   
@@ -222,6 +200,15 @@ kubectl port-forward service/kafka-connect 8083:8083
 #         "database.history.kafka.topic": "schema-changes.inventory"  
 #     }
 # }
+# With curl:
+
+curl \
+   --request POST \
+   --data '{"name":"inventory-connector","config": {"connector.class" : "io.debezium.connector.oracle.OracleConnector","database.hostname" : "<ORACLE_IP_ADDRESS>","database.port" : "1521","database.user" : "c##dbzuser","database.password" : "dbz","database.dbname" : "ORCLCDB","database.server.name" : "server1","tasks.max" : "1","database.pdb.name" : "ORCLPDB1","database.history.kafka.bootstrap.servers" : "kafka:9092","database.history.kafka.topic": "schema-changes.inventory"}' \
+   localhost:8083/connectors/
+# with errors
+
+
 
 
 

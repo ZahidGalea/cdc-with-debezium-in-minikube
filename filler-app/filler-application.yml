@@ -34,7 +34,7 @@ spec:
               value: "$(ORACLE18XE_SVC_SERVICE_PORT)"
 
             - name: ORACLE_DB_NAME
-              value: XEPDB1
+              value: ORCLPDB1
 
             - name: ORACLE_DB_USERNAME
               valueFrom:

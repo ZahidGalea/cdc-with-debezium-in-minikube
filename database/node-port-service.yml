@@ -16,8 +16,10 @@ spec:
       port: 1521
       targetPort: 1521
       name: listener
+      nodePort: 30001
     - protocol: TCP
       port: 5500
       targetPort: 5500
       name: oemexpress
+      nodePort: 30002
   externalTrafficPolicy: Cluster
