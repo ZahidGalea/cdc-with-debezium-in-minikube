@@ -10,16 +10,12 @@ spec:
   selector:
     app: database
     version: 18.4.0.1
-  type: NodePort
   ports:
     - protocol: TCP
       port: 1521
       targetPort: 1521
       name: listener
-      nodePort: 30001
     - protocol: TCP
       port: 5500
       targetPort: 5500
       name: oemexpress
-      nodePort: 30002
-  externalTrafficPolicy: Cluster

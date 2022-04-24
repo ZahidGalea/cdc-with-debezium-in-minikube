@@ -10,7 +10,6 @@ spec:
   selector:
     app: filler-app
     version: "1.0.0"
-  type: NodePort
   ports:
     - protocol: TCP
       port: 8080

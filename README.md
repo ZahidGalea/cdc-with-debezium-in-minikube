@@ -104,6 +104,9 @@ kubectl apply -f kafka/kafka-manager.yml
 ```
 
 # Lets dockerize our java jar filler app and save it
+# (BTW, it comes from an app that I created before)
+# https://github.com/ZahidGalea/logistics-spring-boot-app
+# Just package it and use it if u want! 
 docker build -t=logistic-app:latest filler-app/
 
 # This apps requires an oracle DB Up and runing,
@@ -171,6 +174,10 @@ kubectl apply -f kafka/kafka-schema-registry.yml
 # Now lets get up the Kafka Connect
 kubectl apply -f kafka/kafka-connect.yml
 
+# In order to work with oracle we will have to mount a directory into minikube first:
+# And keep it running btw! 
+minikube mount ${PWD}/debezium-connector-oracle:/data
+
 # Now set the debezium into the kafka connect using a simple curl. but first we will need to expose
 # the port 8083 to be able to curl it from our computer.
 kubectl port-forward service/kafka-connect-svc 8083:8083
@@ -179,38 +186,46 @@ kubectl port-forward service/kafka-connect-svc 8083:8083
 # curl -H "Accept:application/json" localhost:8083/
 # It should return you something like:
 # {"version":"7.0.1-ccs","commit":"b7e52413e7cb3e8b","kafka_cluster_id":"287OqZkVRgi3TI80fjxJCg"}
+
+# https://debezium.io/documentation/reference/stable/connectors/oracle.html#required-debezium-oracle-connector-configuration-properties
+# Now register the debezium connector with something like:
+POST localhost:8083/connectors/
+{
+  "name": "fillerapplication-connector",
+  "config": {
+    "connector.class": "io.debezium.connector.oracle.OracleConnector",
+    "database.hostname": "oracle18xe-svc",
+    "database.port": "1521",
+    "database.user": "c##dbzuser",
+    "database.password": "dbz",
+    "database.dbname": "ORCLCDB",
+    "database.pdb.name": "ORCLPDB1",
+    "database.server.name": "filler_application",
+    "database.connection.adapter": "logminer",
+    "table.include.list": "FILLERAPPLICATION.ESTADO_ENVIO,FILLERAPPLICATION.ENVIO",
+    "event.processing.failure.handling.mode": "warn",
+    "poll.interval.ms": "2000",
+    "tasks.max" : "1",
+    "database.history.kafka.bootstrap.servers": "kafka-svc:9092",
+    "database.history.kafka.topic": "schema-changes.fillerapplication",
+    "snapshot.mode": "initial"
+  }
+}
+# With curl:
+curl -i -X POST -H "Accept:application/json" -H "Content-Type:application/json" \
+localhost:8083/connectors/ --data '{"name":"fillerapplication-connector","config":{"connector.class":"io.debezium.connector.oracle.OracleConnector","database.hostname":"oracle18xe-svc","database.port":"1521","database.user":"c##dbzuser","database.password":"dbz","database.dbname":"ORCLCDB","database.pdb.name":"ORCLPDB1","database.server.name":"filler_application","database.connection.adapter":"logminer","table.include.list":"FILLERAPPLICATION.ESTADO_ENVIO,FILLERAPPLICATION.ENVIO","event.processing.failure.handling.mode":"warn","poll.interval.ms":"2000","tasks.max":"1","database.history.kafka.bootstrap.servers":"kafka-svc:9092","database.history.kafka.topic":"schema-changes.fillerapplication","snapshot.mode":"initial"}}'
+
 # If u want to list the connectors:
 # curl -H "Accept:application/json" localhost:8083/connectors/
 
-# Now register the debezium connector with:
-# POST localhost:8083/connectors/
-# {
-#     "name": "inventory-connector",  
-#     "config": {
-#         "connector.class" : "io.debezium.connector.oracle.OracleConnector",  
-#         "database.hostname" : "localhost",  
-#         "database.port" : "1521",  
-#         "database.user" : "c##dbzuser",  
-#         "database.password" : "dbz",   
-#         "database.dbname" : "ORCLCDB",  
-#         "database.server.name" : "server1",  
-#         "tasks.max" : "1",  
-#         "database.pdb.name" : "ORCLPDB1",  
-#         "database.history.kafka.bootstrap.servers" : "kafka:9092", 
-#         "database.history.kafka.topic": "schema-changes.inventory"  
-#     }
-# }
-# With curl:
+# If u want to get the status of a connector:
+# curl -H "Accept:application/json" localhost:8083/connectors/?expand=status
 
-curl \
-   --request POST \
-   --data '{"name":"inventory-connector","config": {"connector.class" : "io.debezium.connector.oracle.OracleConnector","database.hostname" : "<ORACLE_IP_ADDRESS>","database.port" : "1521","database.user" : "c##dbzuser","database.password" : "dbz","database.dbname" : "ORCLCDB","database.server.name" : "server1","tasks.max" : "1","database.pdb.name" : "ORCLPDB1","database.history.kafka.bootstrap.servers" : "kafka:9092","database.history.kafka.topic": "schema-changes.inventory"}' \
-   localhost:8083/connectors/
-# with errors
+# If u want to restart it:
+# curl -H "Accept:application/json" -X POST localhost:8083/connectors/inventory-connector/restart
 
-
-
-
+# If u want to delete it:
+# curl -X DELETE http://localhost:8083/connectors/fillerapplication-connector
 
 ```
 
@@ -236,7 +251,7 @@ https://ronekins.com/2020/03/14/running-oracle-12c-in-kubernetes-with-minikube-a
 
 https://www.startdataengineering.com/post/change-data-capture-using-debezium-kafka-and-pg/
 
-### Kafka explication:
+### Kafka explanation:
 
 https://www.youtube.com/watch?v=QYbXDp4Vu-8
 

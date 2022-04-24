@@ -27,8 +27,6 @@ spec:
           projected:
             sources:
               - configMap:
-                  name: filler-app-db-creation
-              - configMap:
                   name: log-miner-config
       containers:
         - name: oracle18xe

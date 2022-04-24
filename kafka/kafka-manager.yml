@@ -4,7 +4,6 @@ metadata:
   name: kafka-manager
   namespace: application-ns
 spec:
-  type: NodePort
   selector:
     app: kafka-manager
   ports:
@@ -34,4 +33,4 @@ spec:
             - containerPort: 9000
           env:
             - name: ZK_HOSTS
-              value: "zookeeper-service:2181"
+              value: "zookeeper-svc:2181"
