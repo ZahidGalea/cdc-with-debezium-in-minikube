@@ -1,3 +1,25 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: oracle18xe-svc
+  namespace: application-ns
+  labels:
+    app: database
+    version: 18.4.0.1
+spec:
+  selector:
+    app: database
+    version: 18.4.0.1
+  ports:
+    - protocol: TCP
+      port: 1521
+      targetPort: 1521
+      name: listener
+    - protocol: TCP
+      port: 5500
+      targetPort: 5500
+      name: oemexpress
+---
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
@@ -28,6 +50,8 @@ spec:
             sources:
               - configMap:
                   name: log-miner-config
+              - configMap:
+                  name: filler-app-db-creation
       containers:
         - name: oracle18xe
           image: oracle/database:19.3.0-ee
@@ -47,5 +71,9 @@ spec:
               mountPath: "/opt/oracle/scripts/startup"
           env:
             - name: ORACLE_PWD
-              value: top_secret
+              valueFrom:
+                secretKeyRef:
+                  name: oracle-admin-auth
+                  key: password
+                  optional: false
   serviceName: oracle18xe-db

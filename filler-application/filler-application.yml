@@ -1,0 +1,67 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: filler-app-svc
+  namespace: application-ns
+  labels:
+    app: filler-app
+    version: "1.0.0"
+spec:
+  selector:
+    app: filler-app
+    version: "1.0.0"
+  ports:
+    - protocol: TCP
+      port: 8080
+      targetPort: 8080
+      name: traffic
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: filler-app
+  namespace: application-ns
+  labels:
+    app: filler-app
+    version: "1.0.0"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: filler-app
+      version: "1.0.0"
+  template:
+    metadata:
+      name: filler-app
+      labels:
+        app: filler-app
+        version: "1.0.0"
+    spec:
+      containers:
+        - name: filler-app
+          image: logistic-app:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: tomcat
+              containerPort: 8080
+          env:
+            - name: ORACLE_DB_HOST
+              value: "$(ORACLE18XE_SVC_SERVICE_HOST)"
+
+            - name: ORACLE_DB_PORT
+              value: "$(ORACLE18XE_SVC_SERVICE_PORT)"
+
+            - name: ORACLE_DB_NAME
+              value: ORCLPDB1
+
+            - name: ORACLE_DB_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: oracle-db-auth
+                  key: username
+
+            - name: ORACLE_DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: oracle-db-auth
+                  key: password

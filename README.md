@@ -7,12 +7,11 @@
 ## What is my plan?
 
 1) Generate a DB with a Logistic Model and an API to generate Test traffic into. :heavy_check_mark:
-2) Crete a replication of the DB using Debezium + Zookeper +Kafka
+2) Crete a replication of an Oracle DB to Kafka in near real-time using Debezium
 3) Subscribe to the kafka topics a series of applications like:
     * Realtime Dashboards
     * Apache Beam processing for real time analytics
     * ML Model implementation
-4) Automatic deployment and integration through a CI/CD Pipeline using Gitlab runners and Github as source repo.
 
 ---
 
@@ -31,6 +30,7 @@ minikube start
 # Creating our demo namespaces:
 
 kubectl apply -f namespaces/
+kubectl config set-context --current --namespace=application-ns
 
 ```
 
@@ -57,6 +57,9 @@ eval $(minikube docker-env -u)
 # Sets the context to avoid using of parameter namespace
 kubectl config set-context --current --namespace=application-ns
 
+# Lets create some secrets first:
+kubectl apply -f secrets/*
+
 # Configmap creation for startup SQL
 # if exists: kubectl delete configmap filler-app-db-creation
 kubectl create configmap filler-app-db-creation --from-file=database/startup-scripts/filler-app-db-creation.sql -n application-ns
@@ -65,41 +68,13 @@ kubectl create configmap filler-app-db-creation --from-file=database/startup-scr
 kubectl create configmap log-miner-config --from-file=database/startup-scripts/setup-logminer.sh -n application-ns
 
 # Applying the database and the service nodeport resources
-kubectl apply -f database/node-port-service.yml
 kubectl apply -f database/db.yml
 
-## Important! 
-# To test the database:
-# minikube service -n application-ns oracle18xe --url
-
-# DB Credentials as system:
-# usuario: system
-# pw: top_secret
-
+# To test the database  Forward the minikube port
+kubectl port-forward service/oracle18xe-svc 1521:1521
 ```
 
-## 2 - Kafka & Zookeper
-
-```
-kubectl config set-context --current --namespace=application-ns
-
-------
-# Creates zookeper
-kubectl apply -f zookeper/zookeper.yml
-
-# Creates kafka cluster with 3 replicas
-kubectl apply -f kafka/kafka.yml
-
-# Creates the kafka manager
-kubectl apply -f kafka/kafka-manager.yml
-
-# How to open kafka manager?
-# minikube service -n application-ns kafka-manager --url
-# Open the resultant url from the output
-
-```
-
-## 3 - Filler APP Build
+## 2 - Filler APP Build
 
 ```
 
@@ -107,7 +82,7 @@ kubectl apply -f kafka/kafka-manager.yml
 # (BTW, it comes from an app that I created before)
 # https://github.com/ZahidGalea/logistics-spring-boot-app
 # Just package it and use it if u want! 
-docker build -t=logistic-app:latest filler-app/
+docker build -t=logistic-app:latest filler-application/
 
 # This apps requires an oracle DB Up and runing,
 # and the por 8080 available in order to work, because it uses Tomcat.
@@ -119,18 +94,8 @@ docker build -t=logistic-app:latest filler-app/
 # ORACLE_DB_USERNAME: ---
 # ORACLE_DB_PASSWORD: ---
 
-# But... lets do the auth it using a Secret ;)
-kubectl apply -f secrets/oracle-db-secret.yml
-
 # Lets run the application
-kubectl apply -f filler-app/filler-application.yml
-kubectl apply -f filler-app/node-port-service.yml
-
-# First we have to apply some SQL into the database after it is created in
-# order to the application to work, so...
-# Forward your port 1521, to the database.
-kubectl port-forward service/oracle18xe-svc 1521:1521
-# Then execute the file somehow: filler-app\required-insertion-in-db.sql
+kubectl apply -f filler-application/filler-application.yml
 
 # Now let's test our app using a single request, forwarding the port also
 kubectl port-forward service/filler-app-svc 8080:8080
@@ -164,21 +129,30 @@ curl --header "Content-Type: application/json" \
 
 ```
 
+## 3 - Zookepeker, Kafka & Kafka connect
+
+```
+
+# Before everything for this demo:
+# In order to work with oracle we will have to mount a directory into minikube first:
+# And keep it running btw! 
+# This is required for the kafka connect Oracle Connector
+minikube mount ${PWD}/debezium-connector-oracle:/data
+
+# Kafka folder will create zookper, kafka with 3 replicas, manager, schema registry and kafka connect
+# The containers will fail because doesn't exist defined dependencies between them, just wait some minutes.
+kubectl apply -f kafka/*
+
+# How to open kafka manager?
+# minikube service -n application-ns kafka-manager --url
+
+```
+
 ## 4 - Streaming DB Changes with debezium
 
 ```
-# To start using the debezium connector we must start the kafka connect. so first
-# Lets instantiate the kafka-schema-registry that ables the parsing to .JSON
-kubectl apply -f kafka/kafka-schema-registry.yml
 
-# Now lets get up the Kafka Connect
-kubectl apply -f kafka/kafka-connect.yml
-
-# In order to work with oracle we will have to mount a directory into minikube first:
-# And keep it running btw! 
-minikube mount ${PWD}/debezium-connector-oracle:/data
-
-# Now set the debezium into the kafka connect using a simple curl. but first we will need to expose
+# Now, set the debezium connector into the kafka connect using a simple curl. but first we will need to expose
 # the port 8083 to be able to curl it from our computer.
 kubectl port-forward service/kafka-connect-svc 8083:8083
 
@@ -236,24 +210,6 @@ minikube docker-env --unset
 minikube stop
 minikube delete
 ```
-
-## Resources
-
-##### Zookeeper & kafka deployment
-
-https://github.com/d1egoaz/minikube-kafka-cluster
-
-##### Oracle setup un minikube:
-
-https://ronekins.com/2020/03/14/running-oracle-12c-in-kubernetes-with-minikube-and-virtualbox/
-
-#### Debezium kafka guide:
-
-https://www.startdataengineering.com/post/change-data-capture-using-debezium-kafka-and-pg/
-
-### Kafka explanation:
-
-https://www.youtube.com/watch?v=QYbXDp4Vu-8
 
 ## Notes
 

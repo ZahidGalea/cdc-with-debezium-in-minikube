@@ -44,3 +44,21 @@ https://docs.oracle.com/en/database/oracle/oracle-database/18/xeinw/connecting-o
 * Solution to create db on startups.
 
 https://medium.com/@m.emmanuel/how-to-navigate-across-cdb-and-pdbs-in-oracle-18c-xe-781ac217f5b0
+
+## Resources
+
+##### Zookeeper & kafka deployment
+
+https://github.com/d1egoaz/minikube-kafka-cluster
+
+##### Oracle setup un minikube:
+
+https://ronekins.com/2020/03/14/running-oracle-12c-in-kubernetes-with-minikube-and-virtualbox/
+
+#### Debezium kafka guide:
+
+https://www.startdataengineering.com/post/change-data-capture-using-debezium-kafka-and-pg/
+
+### Kafka explanation:
+
+https://www.youtube.com/watch?v=QYbXDp4Vu-8
