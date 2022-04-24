@@ -61,7 +61,7 @@ spec:
         - name: oracle-connector
           hostPath:
             # directory location on host
-            path: "/data"
+            path: "/oracle_data"
             # this field is optional
             type: Directory
 

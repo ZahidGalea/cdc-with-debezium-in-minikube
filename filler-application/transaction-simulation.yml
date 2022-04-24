@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: transaction-simulation-filler-app
+  namespace: application-ns
+  labels:
+    app: transaction-simulation-filler-app
+    version: "1.0.0"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: transaction-simulation-filler-app
+      version: "1.0.0"
+  template:
+
+    metadata:
+      name: transaction-simulation-filler-app
+      labels:
+        app: transaction-simulation-filler-app
+        version: "1.0.0"
+    spec:
+      restartPolicy: Always
+      containers:
+        - name: transaction-simulation-filler-app
+          image: simulation-logistic-app:latest
+          imagePullPolicy: IfNotPresent

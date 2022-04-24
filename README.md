@@ -7,7 +7,7 @@
 ## What is my plan?
 
 1) Generate a DB with a Logistic Model and an API to generate Test traffic into. :heavy_check_mark:
-2) Crete a replication of an Oracle DB to Kafka in near real-time using Debezium
+2) Crete a replication of an Oracle DB to Kafka in near real-time using Debezium. :heavy_check_mark:
 3) Subscribe to the kafka topics a series of applications like:
     * Realtime Dashboards
     * Apache Beam processing for real time analytics
@@ -82,10 +82,10 @@ kubectl port-forward service/oracle18xe-svc 1521:1521
 # (BTW, it comes from an app that I created before)
 # https://github.com/ZahidGalea/logistics-spring-boot-app
 # Just package it and use it if u want! 
-docker build -t=logistic-app:latest filler-application/
+docker build -t=logistic-app:latest filler-application/Dockerfile
 
-# This apps requires an oracle DB Up and runing,
-# and the por 8080 available in order to work, because it uses Tomcat.
+# Also an script that makes request to this app
+docker build -t=simulation-logistic-app:latest filler-application/simulation_app/
 
 # The following ENV Variables must be set in the deployment:
 # ORACLE_DB_HOST: localhost or an IP
@@ -94,38 +94,16 @@ docker build -t=logistic-app:latest filler-application/
 # ORACLE_DB_USERNAME: ---
 # ORACLE_DB_PASSWORD: ---
 
-# Lets run the application
+# Lets startup our application:
 kubectl apply -f filler-application/filler-application.yml
 
-# Now let's test our app using a single request, forwarding the port also
-kubectl port-forward service/filler-app-svc 8080:8080
+# And a simple script with a simulation of transactions:
+kubectl apply -f filler-application/transaction-simulation.yml
 
 # Open a new terminal and, stream your logs...
 kubectl logs -f deploy/filler-app
- 
-# Now make a request to the port 8080 like this example:
-POST localhost:8080/api/v1/registrar-venta
-{
-	"fecha_envio": "2021-12-10",
-	"costo_envio": "123",
-	"direccion": "Carmen 390",
-	"comuna": "Santiago",
-	"nombre_apellido": "Zahid Galea",
-	"numero_telefono": "123123123",
-	"rut": "261093456",
-	"region": "a",
-	"peso": 12,
-	"tamanio": "grande"
-}
-
-# or using curl:
-curl --header "Content-Type: application/json" \
-  --request POST \
-  --data '{"fecha_envio":"2021-12-10","costo_envio":"123","direccion":"Carmen 390","comuna":"Santiago","nombre_apellido":"Zahid Galea","numero_telefono":"123123123","rut":"261093456","region":"b","peso":12,"tamanio":"grande"}' \
-  localhost:8080/api/v1/registrar-venta
 
 # Watch that the application is logging correctly....
-
 
 ```
 
@@ -137,7 +115,7 @@ curl --header "Content-Type: application/json" \
 # In order to work with oracle we will have to mount a directory into minikube first:
 # And keep it running btw! 
 # This is required for the kafka connect Oracle Connector
-minikube mount ${PWD}/debezium-connector-oracle:/data
+minikube mount ${PWD}/debezium-connector-oracle:/oracle_data/
 
 # Kafka folder will create zookper, kafka with 3 replicas, manager, schema registry and kafka connect
 # The containers will fail because doesn't exist defined dependencies between them, just wait some minutes.
@@ -202,6 +180,7 @@ localhost:8083/connectors/ --data '{"name":"fillerapplication-connector","config
 # curl -X DELETE http://localhost:8083/connectors/fillerapplication-connector
 
 ```
+
 
 ## N - End it
 
