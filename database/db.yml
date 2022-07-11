@@ -1,79 +1,95 @@
 apiVersion: v1
-kind: Service
+kind: ConfigMap
 metadata:
-  name: oracle18xe-svc
-  namespace: application-ns
+  name: postgres-config
   labels:
-    app: database
-    version: 18.4.0.1
+    app: postgres
+data:
+  POSTGRES_DB: postgresdb
+  POSTGRES_USER: admin
+  POSTGRES_PASSWORD: test123
+
+---
+kind: PersistentVolume
+apiVersion: v1
+metadata:
+  name: postgres-pv-volume
+  labels:
+    type: local
+    app: postgres
 spec:
-  selector:
-    app: database
-    version: 18.4.0.1
-  ports:
-    - protocol: TCP
-      port: 1521
-      targetPort: 1521
-      name: listener
-    - protocol: TCP
-      port: 5500
-      targetPort: 5500
-      name: oemexpress
+  storageClassName: manual
+  capacity:
+    storage: 5Gi
+  accessModes:
+    - ReadWriteMany
+  hostPath:
+    path: "/mnt/data"
+---
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: postgres-pv-claim
+  labels:
+    app: postgres
+spec:
+  storageClassName: manual
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 5Gi
 ---
 apiVersion: apps/v1
-kind: StatefulSet
+kind: Deployment
 metadata:
-  name: oracle18xe
-  namespace: application-ns
-  labels:
-    app: database
-    version: 18.4.0.1
+  name: postgres
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: database
-      version: 18.4.0.1
+      app: postgres
   template:
     metadata:
-      name: oracle18xe
       labels:
-        app: database
-        version: 18.4.0.1
+        app: postgres
     spec:
+      containers:
+        - name: postgres
+          image: postgres:latest
+          imagePullPolicy: "IfNotPresent"
+          ports:
+            - containerPort: 5432
+          envFrom:
+            - configMapRef:
+                name: postgres-config
+          volumeMounts:
+            - mountPath: /var/lib/postgresql/data
+              name: postgredb
+            - name: startup-scripts
+              mountPath: "/docker-entrypoint-initdb.d"
       volumes:
-        - name: dshm
-          emptyDir:
-            medium: Memory
+        - name: postgredb
+          persistentVolumeClaim:
+            claimName: postgres-pv-claim
         - name: startup-scripts # Startup Scripts as configmaps
           projected:
             sources:
-              - configMap:
-                  name: log-miner-config
+#              - configMap:
+#                  name: log-miner-config
               - configMap:
                   name: filler-app-db-creation
-      containers:
-        - name: oracle18xe
-          image: oracle/database:19.3.0-ee
-          imagePullPolicy: IfNotPresent
-          resources:
-            requests:
-              memory: 4Gi
-          ports:
-            - name: listener
-              containerPort: 1521
-            - name: oemexpress
-              containerPort: 5500
-          volumeMounts:
-            - name: dshm
-              mountPath: "/dev/shm"
-            - name: startup-scripts
-              mountPath: "/opt/oracle/scripts/startup"
-          env:
-            - name: ORACLE_PWD
-              valueFrom:
-                secretKeyRef:
-                  name: oracle-admin-auth
-                  key: password
-                  optional: false
-  serviceName: oracle18xe-db
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres-svc
+  labels:
+    app: postgres
+spec:
+  type: NodePort
+  ports:
+    - port: 5432
+      targetPort: 5432
+  selector:
+    app: postgres

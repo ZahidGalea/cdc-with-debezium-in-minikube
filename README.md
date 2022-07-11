@@ -7,7 +7,7 @@
 ## What is my plan?
 
 1) Generate a DB with a Logistic Model and an API to generate Test traffic into. :heavy_check_mark:
-2) Crete a replication of an Oracle DB to Kafka in near real-time using Debezium. :heavy_check_mark:
+2) Crete a replication of PostgresSQL Database to Kafka in near real-time using Debezium.
 3) Subscribe to the kafka topics a series of applications like:
     * Realtime Dashboards
     * Apache Beam processing for real time analytics
@@ -17,82 +17,58 @@
 
 ## 0 - Start Config
 
-```
-# In my case I start and use the docker daemon trought CLI
-sudo dockerd
-
+```bash
 # Start with the minikube configuration:
 
 minikube config set memory 5000
 minikube start
-
------
 # Creating our demo namespaces:
 
 kubectl apply -f namespaces/
 kubectl config set-context --current --namespace=application-ns
-
 ```
 
-## 1 - Oracle Database Setup
+## 1 - Postgres Database Setup
 
-Let's set a simple Database :sweat_smile:
+Let's set a simple Database :sweat_smile: In this case a PostgreSQL Database
+https://bitnami.com/stack/postgresql/helm
 
-```
-# First of all.. you will need to build the oracledb image using the following guide:
-# https://github.com/oracle/docker-images/tree/main/OracleDatabase/SingleInstance
-# And as result you will have an oracle image ready to use locally
-# as example:
-# cd OracleDatabase/SingleInstance/dockerfiles/19.3.0
-# You will have to download the linux x64 binaries from the oracle DB then:
-# docker build -t oracle/database:19.3.0-ee --build-arg DB_EDITION=ee .
-# Or add the image to minikube with:
-# minikube image load oracle/database:19.3.0-ee
-
+```bash
 # To use or not use the docker daemon of the minikube:
 eval $(minikube docker-env)
-eval $(minikube docker-env -u)
+#eval $(minikube docker-env -u)
 
 
-# Sets the context to avoid using of parameter namespace
-kubectl config set-context --current --namespace=application-ns
+#kubectl create configmap log-miner-config --from-file=database/startup-scripts/setup-logminer.sh -n application-ns
+kubectl create configmap filler-app-db-creation --from-file=database/startup-scripts/db.creation.sh -n application-ns
 
-# Lets create some secrets first:
-kubectl apply -f secrets/*
-
-# Configmap creation for startup SQL
-# if exists: kubectl delete configmap filler-app-db-creation
-kubectl create configmap filler-app-db-creation --from-file=database/startup-scripts/filler-app-db-creation.sql -n application-ns
-# This configmap will be used for the logminer configuration
-# if exists: kubectl delete configmap log-miner-config
-kubectl create configmap log-miner-config --from-file=database/startup-scripts/setup-logminer.sh -n application-ns
-
-# Applying the database and the service nodeport resources
+# Create the database (It will apply the startup scripts folder with the above configmaps)
 kubectl apply -f database/db.yml
 
-# To test the database  Forward the minikube port
-kubectl port-forward service/oracle18xe-svc 1521:1521
+# Test the connection and the database if u want with:
+kubectl port-forward service/postgres-svc 5432:5432
+
 ```
 
 ## 2 - Filler APP Build
 
-```
-
+```bash
 # Lets dockerize our java jar filler app and save it
 # (BTW, it comes from an app that I created before)
 # https://github.com/ZahidGalea/logistics-spring-boot-app
 # Just package it and use it if u want! 
-docker build -t=logistic-app:latest filler-application/Dockerfile
+# Be aware that the image must be available to the minikube daemon
+# To use or not use the docker daemon of the minikube:
+eval $(minikube docker-env)
+#eval $(minikube docker-env -u)
+
+docker build -t=logistic-app:latest filler-application/
 
 # Also an script that makes request to this app
 docker build -t=simulation-logistic-app:latest filler-application/simulation_app/
 
-# The following ENV Variables must be set in the deployment:
-# ORACLE_DB_HOST: localhost or an IP
-# ORACLE_DB_PORT: 1521 mostly for all oracle db 
-# ORACLE_DB_NAME: DB where the app will create the tables and fill with data
-# ORACLE_DB_USERNAME: ---
-# ORACLE_DB_PASSWORD: ---
+# Lets create some secrets first with the application:
+kubectl apply -f secrets/*
 
 # Lets startup our application:
 kubectl apply -f filler-application/filler-application.yml
@@ -102,7 +78,6 @@ kubectl apply -f filler-application/transaction-simulation.yml
 
 # Open a new terminal and, stream your logs...
 kubectl logs -f deploy/filler-app
-
 # Watch that the application is logging correctly....
 
 ```

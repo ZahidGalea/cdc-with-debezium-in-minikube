@@ -53,12 +53,12 @@ spec:
             - name: CONNECT_REST_ADVERTISED_HOST_NAME
               value: localhost
             - name: CONNECT_PLUGIN_PATH
-              value: "/usr/share/java,/usr/share/java/oracle"
+              value: "/usr/share/java,/usr/share/java/oracle" # TODO: Cambiar
           volumeMounts:
             - mountPath: /usr/share/java/oracle
               name: oracle-connector
       volumes:
-        - name: oracle-connector
+        - name: oracle-connector # TODO: Cambiar
           hostPath:
             # directory location on host
             path: "/oracle_data"

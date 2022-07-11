@@ -13,7 +13,6 @@ spec:
       app: transaction-simulation-filler-app
       version: "1.0.0"
   template:
-
     metadata:
       name: transaction-simulation-filler-app
       labels:

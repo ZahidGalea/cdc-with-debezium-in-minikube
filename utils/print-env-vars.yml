@@ -11,6 +11,6 @@ spec:
         - name: PRINT1
           value: "$(KAFKA_PORT)"
         - name: PRINT2
-          value: "$(ORACLE18XE_SVC_SERVICE_PORT)"
+          value: "$(POSTGRES_SVC_SERVICE_PORT)"
       command: [ "echo" ]
       args: [ '"PLAINTEXT://${KAFKA_SERVICE_HOST}:${KAFKA_SERVICE_PORT}" $(KAFKA_PORT)' ]

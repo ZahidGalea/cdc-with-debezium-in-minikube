@@ -45,23 +45,23 @@ spec:
             - name: tomcat
               containerPort: 8080
           env:
-            - name: ORACLE_DB_HOST
-              value: "$(ORACLE18XE_SVC_SERVICE_HOST)"
+            - name: POSTGRE_DB_HOST
+              value: "$(POSTGRES_SVC_SERVICE_HOST)"
 
-            - name: ORACLE_DB_PORT
-              value: "$(ORACLE18XE_SVC_SERVICE_PORT)"
+            - name: POSTGRE_DB_PORT
+              value: "$(POSTGRES_SVC_SERVICE_PORT)"
 
-            - name: ORACLE_DB_NAME
-              value: ORCLPDB1
+            - name: POSTGRE_DB_NAME
+              value: postgres
 
-            - name: ORACLE_DB_USERNAME
+            - name: POSTGRE_DB_USERNAME
               valueFrom:
                 secretKeyRef:
-                  name: oracle-db-auth
+                  name: postgres-db-auth
                   key: username
 
-            - name: ORACLE_DB_PASSWORD
+            - name: POSTGRE_DB_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: oracle-db-auth
+                  name: postgres-db-auth
                   key: password
