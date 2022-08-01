@@ -46,7 +46,7 @@ kubectl create configmap filler-app-db-creation --from-file=database/startup-scr
 kubectl apply -f database/db.yml
 
 # Test the connection and the database if u want with:
-kubectl port-forward service/postgres-svc 5432:5432
+# kubectl port-forward service/postgres-svc 5432:5432
 
 ```
 
@@ -68,7 +68,7 @@ docker build -t=logistic-app:latest filler-application/
 docker build -t=simulation-logistic-app:latest filler-application/simulation_app/
 
 # Lets create some secrets first with the application:
-kubectl apply -f secrets/*
+kubectl apply -f secrets/
 
 # Lets startup our application:
 kubectl apply -f filler-application/filler-application.yml
@@ -76,25 +76,19 @@ kubectl apply -f filler-application/filler-application.yml
 # And a simple script with a simulation of transactions:
 kubectl apply -f filler-application/transaction-simulation.yml
 
-# Open a new terminal and, stream your logs...
-kubectl logs -f deploy/filler-app
 # Watch that the application is logging correctly....
+# kubectl logs -f deploy/filler-app
+
 
 ```
 
 ## 3 - Zookepeker, Kafka & Kafka connect
 
-```
-
-# Before everything for this demo:
-# In order to work with oracle we will have to mount a directory into minikube first:
-# And keep it running btw! 
-# This is required for the kafka connect Oracle Connector
-minikube mount ${PWD}/debezium-connector-oracle:/oracle_data/
+```bash
 
 # Kafka folder will create zookper, kafka with 3 replicas, manager, schema registry and kafka connect
 # The containers will fail because doesn't exist defined dependencies between them, just wait some minutes.
-kubectl apply -f kafka/*
+kubectl apply -f kafka
 
 # How to open kafka manager?
 # minikube service -n application-ns kafka-manager --url
@@ -103,12 +97,12 @@ kubectl apply -f kafka/*
 
 ## 4 - Streaming DB Changes with debezium
 
-```
-
+```bash
 # Now, set the debezium connector into the kafka connect using a simple curl. but first we will need to expose
 # the port 8083 to be able to curl it from our computer.
-kubectl port-forward service/kafka-connect-svc 8083:8083
-
+kubectl port-forward service/debezium-svc 8083:8083
+```
+```bash
 # Test it with:
 # curl -H "Accept:application/json" localhost:8083/
 # It should return you something like:
@@ -116,32 +110,33 @@ kubectl port-forward service/kafka-connect-svc 8083:8083
 
 # https://debezium.io/documentation/reference/stable/connectors/oracle.html#required-debezium-oracle-connector-configuration-properties
 # Now register the debezium connector with something like:
-POST localhost:8083/connectors/
+#POST localhost:8083/connectors/
 {
-  "name": "fillerapplication-connector",
+  "name": "exampledb-connector",
   "config": {
-    "connector.class": "io.debezium.connector.oracle.OracleConnector",
-    "database.hostname": "oracle18xe-svc",
-    "database.port": "1521",
-    "database.user": "c##dbzuser",
-    "database.password": "dbz",
-    "database.dbname": "ORCLCDB",
-    "database.pdb.name": "ORCLPDB1",
-    "database.server.name": "filler_application",
-    "database.connection.adapter": "logminer",
-    "table.include.list": "FILLERAPPLICATION.ESTADO_ENVIO,FILLERAPPLICATION.ENVIO",
-    "event.processing.failure.handling.mode": "warn",
-    "poll.interval.ms": "2000",
-    "tasks.max" : "1",
-    "database.history.kafka.bootstrap.servers": "kafka-svc:9092",
-    "database.history.kafka.topic": "schema-changes.fillerapplication",
-    "snapshot.mode": "initial"
+    "connector.class": "io.debezium.connector.postgresql.PostgresConnector",
+    "plugin.name": "pgoutput",
+    "database.hostname": "postgres-svc",
+    "database.port": "5432",
+    "database.user": "logisticapp",
+    "database.password": "vn53nag",
+    "database.dbname": "logisticapp",
+    "database.server.name": "postgres"
+    "table.include.list" : "public.envio"
   }
 }
+
+```
+
+```bash
+
 # With curl:
 curl -i -X POST -H "Accept:application/json" -H "Content-Type:application/json" \
-localhost:8083/connectors/ --data '{"name":"fillerapplication-connector","config":{"connector.class":"io.debezium.connector.oracle.OracleConnector","database.hostname":"oracle18xe-svc","database.port":"1521","database.user":"c##dbzuser","database.password":"dbz","database.dbname":"ORCLCDB","database.pdb.name":"ORCLPDB1","database.server.name":"filler_application","database.connection.adapter":"logminer","table.include.list":"FILLERAPPLICATION.ESTADO_ENVIO,FILLERAPPLICATION.ENVIO","event.processing.failure.handling.mode":"warn","poll.interval.ms":"2000","tasks.max":"1","database.history.kafka.bootstrap.servers":"kafka-svc:9092","database.history.kafka.topic":"schema-changes.fillerapplication","snapshot.mode":"initial"}}'
+localhost:8083/connectors/ --data '{"name":"exampledb-connector","config":{"connector.class":"io.debezium.connector.postgresql.PostgresConnector","plugin.name":"pgoutput","database.hostname":"postgres-svc","database.port":"5432","database.user":"logisticapp","database.password":"vn53nag","database.dbname":"logisticapp","database.server.name":"postgres","table.include.list":"public.envio"}}'
 
+```
+
+```bash
 # If u want to list the connectors:
 # curl -H "Accept:application/json" localhost:8083/connectors/
 

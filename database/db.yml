@@ -56,7 +56,7 @@ spec:
     spec:
       containers:
         - name: postgres
-          image: postgres:latest
+          image: debezium/postgres:14
           imagePullPolicy: "IfNotPresent"
           ports:
             - containerPort: 5432
@@ -75,8 +75,6 @@ spec:
         - name: startup-scripts # Startup Scripts as configmaps
           projected:
             sources:
-#              - configMap:
-#                  name: log-miner-config
               - configMap:
                   name: filler-app-db-creation
 ---

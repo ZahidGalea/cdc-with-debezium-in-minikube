@@ -6,6 +6,8 @@ metadata:
   labels:
     app: kafka-schema-registry
 spec:
+  selector:
+    app: kafka-schema-registry
   ports:
     - port: 8081
 
@@ -27,7 +29,7 @@ spec:
     spec:
       containers:
         - name: kafka-schema-registry
-          image: confluentinc/cp-schema-registry:7.0.1
+          image: confluentinc/cp-schema-registry:5.5.3
           ports:
             - containerPort: 8081
           env:
@@ -39,3 +41,5 @@ spec:
               value: "http://localhost:8081"
             - name: SCHEMA_REGISTRY_DEBUG
               value: "true"
+            - name: SCHEMA_REGISTRY_KAFKASTORE_CONNECTION_URL
+              value: "$(ZOOKEEPER_SVC_SERVICE_HOST):$(ZOOKEEPER_SVC_SERVICE_PORT)"

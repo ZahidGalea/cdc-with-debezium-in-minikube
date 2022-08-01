@@ -52,7 +52,7 @@ spec:
               value: "$(POSTGRES_SVC_SERVICE_PORT)"
 
             - name: POSTGRE_DB_NAME
-              value: postgres
+              value: logisticapp
 
             - name: POSTGRE_DB_USERNAME
               valueFrom:
