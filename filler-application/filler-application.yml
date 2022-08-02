@@ -2,7 +2,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: filler-app-svc
-  namespace: application-ns
+  namespace: cdc-demo
   labels:
     app: filler-app
     version: "1.0.0"
@@ -20,7 +20,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: filler-app
-  namespace: application-ns
+  namespace: cdc-demo
   labels:
     app: filler-app
     version: "1.0.0"

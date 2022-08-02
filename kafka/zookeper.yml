@@ -5,7 +5,7 @@ metadata:
   labels:
     app: zookeeper-svc
   name: zookeeper-svc
-  namespace: application-ns
+  namespace: cdc-demo
 spec:
   ports:
     - name: zookeeper-port
@@ -22,7 +22,7 @@ metadata:
   labels:
     app: zookeeper
   name: zookeeper
-  namespace: application-ns
+  namespace: cdc-demo
 spec:
   replicas: 1
   selector:

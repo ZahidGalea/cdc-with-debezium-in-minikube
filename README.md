@@ -19,13 +19,11 @@
 
 ```bash
 # Start with the minikube configuration:
+minikube start --memory 11000 --cpus 6
 
-minikube config set memory 5000
-minikube start
 # Creating our demo namespaces:
-
 kubectl apply -f namespaces/
-kubectl config set-context --current --namespace=application-ns
+kubectl config set-context --current --namespace=kafka
 ```
 
 ## 1 - Postgres Database Setup
@@ -39,8 +37,8 @@ eval $(minikube docker-env)
 #eval $(minikube docker-env -u)
 
 
-#kubectl create configmap log-miner-config --from-file=database/startup-scripts/setup-logminer.sh -n application-ns
-kubectl create configmap filler-app-db-creation --from-file=database/startup-scripts/db.creation.sh -n application-ns
+#kubectl create configmap log-miner-config --from-file=database/startup-scripts/setup-logminer.sh -n kafka
+kubectl create configmap filler-app-db-creation --from-file=database/startup-scripts/db.creation.sh -n kafka
 
 # Create the database (It will apply the startup scripts folder with the above configmaps)
 kubectl apply -f database/db.yml
@@ -89,9 +87,8 @@ kubectl apply -f filler-application/transaction-simulation.yml
 # Kafka folder will create zookper, kafka with 3 replicas, manager, schema registry and kafka connect
 # The containers will fail because doesn't exist defined dependencies between them, just wait some minutes.
 kubectl apply -f kafka
-
 # How to open kafka manager?
-# minikube service -n application-ns kafka-manager --url
+# minikube service -n cdc-demo kafka-manager --url
 
 ```
 
@@ -100,7 +97,7 @@ kubectl apply -f kafka
 ```bash
 # Now, set the debezium connector into the kafka connect using a simple curl. but first we will need to expose
 # the port 8083 to be able to curl it from our computer.
-kubectl port-forward service/debezium-svc 8083:8083
+kubectl port-forward service/kafka-connect-svc 8083:8083
 ```
 ```bash
 # Test it with:
@@ -112,13 +109,13 @@ kubectl port-forward service/debezium-svc 8083:8083
 # Now register the debezium connector with something like:
 #POST localhost:8083/connectors/
 {
-  "name": "exampledb-connector",
+  "name": "logisticapp",
   "config": {
     "connector.class": "io.debezium.connector.postgresql.PostgresConnector",
     "plugin.name": "pgoutput",
     "database.hostname": "postgres-svc",
     "database.port": "5432",
-    "database.user": "logisticapp",
+    "database.user": "dbz_rpl_user",
     "database.password": "vn53nag",
     "database.dbname": "logisticapp",
     "database.server.name": "postgres"
@@ -132,8 +129,10 @@ kubectl port-forward service/debezium-svc 8083:8083
 
 # With curl:
 curl -i -X POST -H "Accept:application/json" -H "Content-Type:application/json" \
-localhost:8083/connectors/ --data '{"name":"exampledb-connector","config":{"connector.class":"io.debezium.connector.postgresql.PostgresConnector","plugin.name":"pgoutput","database.hostname":"postgres-svc","database.port":"5432","database.user":"logisticapp","database.password":"vn53nag","database.dbname":"logisticapp","database.server.name":"postgres","table.include.list":"public.envio"}}'
+localhost:8083/connectors/ --data '{"name":"logisticapp","config":{"connector.class":"io.debezium.connector.postgresql.PostgresConnector","plugin.name":"pgoutput","database.hostname":"postgres-svc","database.port":"5432","database.user":"dbz_rpl_user","database.password":"vn53nag","database.dbname":"logisticapp","database.server.name":"postgres","table.include.list":"public.envio"}}'
 
+# If u want to delete a connector:
+# curl -X DELETE localhost:8083/connectors/logisticapp
 ```
 
 ```bash
@@ -154,7 +153,7 @@ localhost:8083/connectors/ --data '{"name":"exampledb-connector","config":{"conn
 
 ## N - End it
 
-```
+```bash
 minikube docker-env --unset
 minikube stop
 minikube delete

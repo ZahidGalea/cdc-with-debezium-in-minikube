@@ -2,7 +2,7 @@ kind: Service
 apiVersion: v1
 metadata:
   name: kafka-manager
-  namespace: application-ns
+  namespace: cdc-demo
 spec:
   selector:
     app: kafka-manager
@@ -15,7 +15,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: kafka-manager
-  namespace: application-ns
+  namespace: cdc-demo
 spec:
   replicas: 1
   selector:

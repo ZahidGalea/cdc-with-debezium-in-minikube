@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: transaction-simulation-filler-app
-  namespace: application-ns
+  namespace: cdc-demo
   labels:
     app: transaction-simulation-filler-app
     version: "1.0.0"

@@ -5,4 +5,6 @@ psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-E
 	CREATE USER logisticapp WITH PASSWORD 'vn53nag';
 	CREATE DATABASE logisticapp;
 	GRANT ALL PRIVILEGES ON DATABASE logisticapp TO logisticapp;
+	ALTER USER logisticapp REPLICATION SUPERUSER;
+
 EOSQL
