@@ -1,5 +1,3 @@
-# Currently Working on this :)
-
 ---
 
 # Change Data Capture Demo
@@ -7,7 +5,7 @@
 ## What is my plan?
 
 1) Generate a DB with a Logistic Model and an API to generate Test traffic into. :heavy_check_mark:
-2) Crete a replication of PostgresSQL Database to Kafka in near real-time using Debezium.
+2) Crete a replication of PostgresSQL Database to Kafka in near real-time using Debezium. :heavy_check_mark:
 3) Subscribe to the kafka topics a series of applications like:
     * Realtime Dashboards
     * Apache Beam processing for real time analytics
@@ -158,7 +156,3 @@ minikube docker-env --unset
 minikube stop
 minikube delete
 ```
-
-## Notes
-
-[Notes Readme](NOTES.md)
