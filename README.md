@@ -1,4 +1,3 @@
----
 
 # Change Data Capture Demo
 
