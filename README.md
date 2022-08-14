@@ -16,11 +16,11 @@
 
 ```bash
 # Start with the minikube configuration:
-minikube start --memory 11000 --cpus 6
+minikube start --memory 11000 --cpus 6  --insecure-registry "10.0.0.0/24"
+minikube addons enable registry
 
-# Creating our demo namespaces:
-kubectl apply -f namespaces/
-kubectl config set-context --current --namespace=kafka
+kubectl create ns debezium-example
+kubectl config set-context --current --namespace=debezium-example
 ```
 
 ## 1 - Postgres Database Setup
@@ -33,9 +33,7 @@ https://bitnami.com/stack/postgresql/helm
 eval $(minikube docker-env)
 #eval $(minikube docker-env -u)
 
-
-#kubectl create configmap log-miner-config --from-file=database/startup-scripts/setup-logminer.sh -n kafka
-kubectl create configmap filler-app-db-creation --from-file=database/startup-scripts/db.creation.sh -n kafka
+kubectl create configmap filler-app-db-creation --from-file=database/startup-scripts/db.creation.sh
 
 # Create the database (It will apply the startup scripts folder with the above configmaps)
 kubectl apply -f database/db.yml
@@ -77,24 +75,40 @@ kubectl apply -f filler-application/transaction-simulation.yml
 
 ```
 
-## 3 - Zookepeker, Kafka & Kafka connect
+## 3 - Zookepeker, Kafka & Kafka connect (With strimzi)
+
+* Strimzi Operator
+```bash
+curl -sL https://github.com/operator-framework/operator-lifecycle-manager/releases/download/v0.20.0/install.sh | bash -s v0.20.0
+kubectl create -f https://operatorhub.io/install/strimzi-kafka-operator.yaml
+```
+
+* Secrets and role
+```bash
+kubectl create -n debezium-example -f secrets/debezium-secret.yml
+kubectl create -n debezium-example -f roles/connector-configuration-role.yml
+kubectl create -n debezium-example -f roles/connector-configuration-role-binding.yml
+```
+
+* Kafka cluster
 
 ```bash
+kubectl create -n debezium-example -f kafka/kafka.yml
+```
 
-# Kafka folder will create zookper, kafka with 3 replicas, manager, schema registry and kafka connect
-# The containers will fail because doesn't exist defined dependencies between them, just wait some minutes.
-kubectl apply -f kafka
-# How to open kafka manager?
-# minikube service -n cdc-demo kafka-manager --url
+* Kafka connect
 
+```bash
+# Get the IP and replace it on the kafka-connect.yml
+kubectl -n kube-system get svc registry -o jsonpath='{.spec.clusterIP}'
+kubectl apply -f kafka/kafka-connect.yml
 ```
 
 ## 4 - Streaming DB Changes with debezium
 
 ```bash
-# Now, set the debezium connector into the kafka connect using a simple curl. but first we will need to expose
-# the port 8083 to be able to curl it from our computer.
-kubectl port-forward service/kafka-connect-svc 8083:8083
+
+kubectl apply -f kafka/dbz-connector.yml
 ```
 ```bash
 # Test it with:
