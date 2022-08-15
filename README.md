@@ -106,62 +106,23 @@ kubectl apply -f kafka/kafka-connect.yml
 
 ## 4 - Streaming DB Changes with debezium
 
+Create the DBZ connector with the following file:
 ```bash
-
 kubectl apply -f kafka/dbz-connector.yml
 ```
+
+If u want to list strimzi resources, and delete wrong connectors just use some of those:
 ```bash
-# Test it with:
-# curl -H "Accept:application/json" localhost:8083/
-# It should return you something like:
-# {"version":"7.0.1-ccs","commit":"b7e52413e7cb3e8b","kafka_cluster_id":"287OqZkVRgi3TI80fjxJCg"}
-
-# https://debezium.io/documentation/reference/stable/connectors/oracle.html#required-debezium-oracle-connector-configuration-properties
-# Now register the debezium connector with something like:
-#POST localhost:8083/connectors/
-{
-  "name": "logisticapp",
-  "config": {
-    "connector.class": "io.debezium.connector.postgresql.PostgresConnector",
-    "plugin.name": "pgoutput",
-    "database.hostname": "postgres-svc",
-    "database.port": "5432",
-    "database.user": "dbz_rpl_user",
-    "database.password": "vn53nag",
-    "database.dbname": "logisticapp",
-    "database.server.name": "postgres"
-    "table.include.list" : "public.envio"
-  }
-}
-
+kubectl get strimzi
+kubectl describe kafkaconnector.kafka.strimzi.io/debezium-connector-postgresql
+kubectl delete kafkaconnector.kafka.strimzi.io/debezium-connector-mysql
 ```
 
+To check the message in the topics you can use something like this:
 ```bash
-
-# With curl:
-curl -i -X POST -H "Accept:application/json" -H "Content-Type:application/json" \
-localhost:8083/connectors/ --data '{"name":"logisticapp","config":{"connector.class":"io.debezium.connector.postgresql.PostgresConnector","plugin.name":"pgoutput","database.hostname":"postgres-svc","database.port":"5432","database.user":"dbz_rpl_user","database.password":"vn53nag","database.dbname":"logisticapp","database.server.name":"postgres","table.include.list":"public.envio"}}'
-
-# If u want to delete a connector:
-# curl -X DELETE localhost:8083/connectors/logisticapp
+kubectl run -n debezium-example -it --rm --image=quay.io/debezium/tooling:1.2  \
+--restart=Never watcher -- kcat -b debezium-cluster-kafka-bootstrap:9092 -C -o beginning -t postgres.public.envio
 ```
-
-```bash
-# If u want to list the connectors:
-# curl -H "Accept:application/json" localhost:8083/connectors/
-
-# If u want to get the status of a connector:
-# curl -H "Accept:application/json" localhost:8083/connectors/?expand=status
-
-# If u want to restart it:
-# curl -H "Accept:application/json" -X POST localhost:8083/connectors/inventory-connector/restart
-
-# If u want to delete it:
-# curl -X DELETE http://localhost:8083/connectors/fillerapplication-connector
-
-```
-
-
 ## N - End it
 
 ```bash

@@ -9,12 +9,12 @@ spec:
   tasksMax: 1
   config:
     tasks.max: 1
-    database.hostname: mysql
-    database.port: 3306
-    database.user: asdasdasd
-    database.password: asdasd
-    database.server.id: 184054
+    plugin.name: pgoutput
+    database.dbname: "logisticapp"
+    database.hostname: postgres-svc
+    database.port: 5432
+    database.user: logisticapp
+    database.password: vn53nag
     database.server.name: postgres
     table.include.list : "public.envio"
     database.history.kafka.bootstrap.servers: debezium-cluster-kafka-bootstrap:9092
-    database.history.kafka.topic: schema-changes.inventory
