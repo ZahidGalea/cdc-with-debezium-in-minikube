@@ -22,7 +22,7 @@ spec:
   build:
     output:
       type: docker
-      image: 10.105.149.242/debezium-connect-postgres:latest
+      image: $MNK_REGISTRY_IP/debezium-connect-postgres:latest
     plugins:
       - name: debezium-postgres-connector
         artifacts:

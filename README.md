@@ -10,6 +10,12 @@
 
 ## 0 - Start Config
 
+Requeriments:
+* docker
+* minikube 
+* envsubst command
+
+
 ```bash
 # Start with the minikube configuration:
 minikube start --memory 11000 --cpus 6  --insecure-registry "10.0.0.0/24"
@@ -95,9 +101,8 @@ kubectl create -n debezium-example -f kafka/kafka.yml
 * Kafka connect
 
 ```bash
-# Get the IP and replace it on the kafka-connect.yml
-kubectl -n kube-system get svc registry -o jsonpath='{.spec.clusterIP}'
-kubectl apply -f kafka/kafka-connect.yml
+export MNK_REGISTRY_IP=$(kubectl -n kube-system get svc registry -o jsonpath='{.spec.clusterIP}')
+envsubst < kafka/kafka-connect.yml | kubectl apply -f -
 ```
 
 ## 4 - Streaming DB Changes with debezium
@@ -117,7 +122,8 @@ kubectl delete kafkaconnector.kafka.strimzi.io/debezium-connector-mysql
 To check the message in the topics you can use something like this:
 ```bash
 kubectl run -n debezium-example -it --rm --image=quay.io/debezium/tooling:1.2  \
---restart=Never watcher -- kcat -b debezium-cluster-kafka-bootstrap:9092 -C -o beginning -t postgres.public.envio
+--restart=Never watcher -- kcat -b debezium-cluster-kafka-bootstrap:9092 -C -o beginning \
+-t postgres.public.envio
 ```
 
 ## N - End it
