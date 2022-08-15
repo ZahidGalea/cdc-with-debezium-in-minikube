@@ -1,14 +1,10 @@
 
-# Change Data Capture Demo
+# CDC with debezium to a PostgreSQL Database
 
 ## What is my plan?
 
 1) Generate a DB with a Logistic Model and an API to generate Test traffic into. :heavy_check_mark:
 2) Crete a replication of PostgresSQL Database to Kafka in near real-time using Debezium. :heavy_check_mark:
-3) Subscribe to the kafka topics a series of applications like:
-    * Realtime Dashboards
-    * Apache Beam processing for real time analytics
-    * ML Model implementation
 
 ---
 
@@ -123,6 +119,7 @@ To check the message in the topics you can use something like this:
 kubectl run -n debezium-example -it --rm --image=quay.io/debezium/tooling:1.2  \
 --restart=Never watcher -- kcat -b debezium-cluster-kafka-bootstrap:9092 -C -o beginning -t postgres.public.envio
 ```
+
 ## N - End it
 
 ```bash
