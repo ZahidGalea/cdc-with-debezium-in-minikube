@@ -84,14 +84,6 @@ kubectl apply -f filler-application/transaction-simulation.yml
 curl -sL https://github.com/operator-framework/operator-lifecycle-manager/releases/download/v0.20.0/install.sh | bash -s v0.20.0
 kubectl create -f https://operatorhub.io/install/strimzi-kafka-operator.yaml
 ```
-
-* Secrets and role
-```bash
-kubectl create -n debezium-example -f secrets/debezium-secret.yml
-kubectl create -n debezium-example -f roles/connector-configuration-role.yml
-kubectl create -n debezium-example -f roles/connector-configuration-role-binding.yml
-```
-
 * Kafka cluster
 
 ```bash
